@@ -1,0 +1,70 @@
+#!/usr/bin/env ruby
+
+require 'mechanize'
+require 'paint'
+
+site = 'http://lxr.linux.no'
+soft = 'linux'
+term = ARGV[0] || raise("Usage: lxr <term>")
+version = ARGV[1]
+
+url = "#{site}/#{soft}"
+url << "+#{version}" unless version.nil?
+url << "/+search?search=#{term}" # FIXME encode for possible space?
+
+agent = Mechanize.new
+
+# Replace the active source browsing window with the search results
+prefs = Mechanize::Cookie.new('lxr_prefs', 'navmethod=replace')
+agent.cookie_jar.add(URI.parse(site), prefs)
+
+agent.get(url)
+search_results_div = agent.current_page.search("#search_results").first
+
+search_results = {}
+
+for element in search_results_div.elements
+  case element['class']
+  when 'query_desc'
+    identtype = nil
+    query_desc = element.text[/\w+/].downcase.to_sym
+  when 'identtype'
+    identtype = element.text.gsub(',', '').gsub(' ', '_').downcase.to_sym
+    search_results[query_desc] ||= {}
+    search_results[query_desc][identtype] = []
+  when 'resultline'
+    result = element.elements.first.text.strip
+    if identtype.nil?
+      search_results[query_desc] ||= []
+      search_results[query_desc] << result
+    else
+      search_results[query_desc][identtype] << result
+    end
+  else
+    # ignore (close button, etc.)
+    #puts "ignore: \"#{element['class']}\" class" # DEBUG
+  end
+end
+
+search_results.delete_if { |q, _| q != :code } # XXX display only code until I add script options
+
+for query, set in search_results
+  puts Paint[query, :blue]
+  if set.is_a? Hash
+    for type, results in set
+      print '  '
+      puts Paint[type, :green]
+      for result in results
+        print '    '
+        puts result
+      end
+    end
+  else
+    for result in set
+      print '  '
+      puts result
+    end
+  end
+end
+
+exit
