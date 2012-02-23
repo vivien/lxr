@@ -1,12 +1,19 @@
-LXR command line tool
+# LXR command line tool
 
-A (soon) improved version of the following trivial Bash script:
+    git clone git://github.com/v0n/lxr.git
+    cd lxr
+    bundle install
+    sudo install lxr /usr/local/bin
+
+It'll be turned into a gem later.
+
+This is a (soon) improved version of the following trivial Bash script:
 
 ```` bash
 #!/bin/bash
 
-# lxr: open lxr website)
-# lxr <term>:  open lxr search page for <term> (requires a pref cookie)
+# `lxr` opens lxr website
+# `lxr <term>` opens lxr search page for <term> (requires a pref cookie)
 
 LXR_BASE_URL=http://lxr.linux.no/linux
 LXR_LINUX_VERSION=
